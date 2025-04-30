@@ -1,36 +1,17 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## This React component (Home) is a user profile form built with Next.js, styled using Tailwind CSS, and enhanced with Google Fonts (Oswald, Roboto). It includes the following key features:
 
-## Getting Started
+Form Data Handling: Accepts user inputs for first name, last name, email, and password.
 
-First, run the development server:
+Image Upload with Validation: Accepts and previews a profile picture with restrictions on type and size.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Client-Side Validation: Validates required fields and image before form submission.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Clipboard Functionality: Allows users to copy the current page URL to the clipboard with visual feedback.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Reset Button: Resets all form fields and uploaded image.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Visual Feedback: Displays errors and success toast messages.
 
-## Learn More
+Styling: UI is centered using Flexbox and styled for clarity and accessibility.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+FontAwesome icons are used for external links.
