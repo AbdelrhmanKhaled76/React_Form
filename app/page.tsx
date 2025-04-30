@@ -1,103 +1,395 @@
+"use client";
+
 import Image from "next/image";
+import image from "../public/abdo2.jpg";
+import { Oswald, Roboto } from "next/font/google";
+import { useEffect, useRef, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faGithubAlt, faLinkedinIn } from "@fortawesome/free-brands-svg-icons";
+import toast from "react-hot-toast";
+import { config } from "@fortawesome/fontawesome-svg-core";
+
+config.autoAddCss = false;
+
+const oswald = Oswald({
+  variable: "--font-oswald",
+  subsets: ["latin"],
+});
+
+const roboto = Roboto({
+  subsets: ["latin"],
+  variable: "--font-roboto",
+});
+
+const ALLOWED_TYPES: string[] = ["image/jpeg", "image/png", "image/jpg"];
+const ALLOWED_SIZE: number = 2;
+
+interface FormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  image?: string;
+  gender: string;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [isCopied, setIsCopied] = useState<boolean>(false);
+  const selectedFile = useRef<File>(null);
+  const [profileImage, setProfileImage] = useState<string>("");
+  const [errors, setErrors] = useState<FormData>();
+  const [validationError, setValidationError] = useState<string>("");
+  const [selectFileName, setSelectFileName] =
+    useState<string>("select a picture");
+  const [formData, setFormData] = useState<FormData>({
+    firstName: "",
+    lastName: "",
+    password: "",
+    email: "",
+    gender: "",
+  });
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+  useEffect(() => {
+    return () => {
+      if (profileImage) {
+        URL.revokeObjectURL(profileImage);
+      }
+    };
+  }, [profileImage]);
+
+  const handleReset = () => {
+    setFormData({
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      gender: "",
+    });
+    setProfileImage("");
+    setValidationError("");
+    setSelectFileName("select a picture");
+    setErrors(undefined);
+  };
+
+  const validate = (): boolean => {
+    const newErrors: FormData = {} as FormData;
+    if (!formData.firstName) newErrors.firstName = "first name is required";
+    if (!formData.lastName) newErrors.lastName = "last name is required";
+    if (!formData.email) newErrors.email = "email is required";
+    if (!formData.email.includes("@")) newErrors.email = "Invalid email";
+    if (!formData.password) newErrors.password = "Password is required";
+    if (formData.password.length < 6) newErrors.password = "Password too short";
+    if (!formData.gender) newErrors.gender = "gender is required";
+    if (validationError) newErrors.image = validationError;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>): void {
+    const { name, value }: { name: string; value: string } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    validate();
+  }
+
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>): void {
+    const Image = (e.target.files?.[0] as File) || null;
+    if (!Image) {
+      setProfileImage("");
+      setSelectFileName("select a picture");
+      setValidationError("no image selected");
+      return;
+    }
+    if (!ALLOWED_TYPES.includes(Image.type)) {
+      setValidationError("invalid image type");
+      setSelectFileName("select a picture");
+      return;
+    }
+    if (Image.size / (1024 * 1024) > ALLOWED_SIZE) {
+      setValidationError(`Image must be smaller than ${ALLOWED_SIZE}MB`);
+      setSelectFileName("select a picture");
+      return;
+    }
+    const image: string = URL.createObjectURL(Image);
+    setValidationError("");
+    setProfileImage(image);
+    setSelectFileName(Image.name);
+    selectedFile.current = Image;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    const form = new FormData();
+    validate();
+    e.preventDefault();
+    if (!profileImage) {
+      setValidationError("image field is required");
+      return;
+    }
+    if (validate()) {
+      for (const [key, val] of Object.entries(formData)) {
+        if (val) form.append(key, String(val));
+      }
+      if (selectedFile.current) form.append("image", selectedFile.current);
+    }
+
+    let res = await fetch(`/api/register`, {
+      method: "POST",
+      body: form,
+    });
+    if (!res.ok) {
+      const error = await res.json();
+      toast.error(error.message);
+    } else {
+      const response = await res.json();
+      toast.success(response.message);
+    }
+  };
+
+  return (
+    <>
+      <main
+        className={`fixed h-screen w-screen flex justify-center items-center bg-[rgba(0,0,0,0.5)] ${roboto.className}`}
+      >
+        <form
+          className="w-[500px] min-h-[600px]  bg-white rounded-3xl shadow-xl p-1"
+          onSubmit={handleSubmit}
+        >
+          <div className="bg-[#F3F3F3] w-full rounded-3xl py-12 px-4 mx-auto">
+            <figure>
+              <Image
+                src={image}
+                alt="user picture"
+                className="w-[80px] h-[80px] object-cover rounded-full border-4 border-white bg-white"
+              ></Image>
+            </figure>
+
+            <button
+              type="button"
+              className={`border px-2 py-1 rounded flex justify-end items-center ms-auto border-gray-300 ${
+                isCopied ? "cursor-not-allowed" : "cursor-pointer"
+              }`}
+              onClick={() => {
+                const url: string = window.location.href;
+                navigator.clipboard.writeText(url);
+                setIsCopied(true);
+              }}
+              disabled={isCopied}
+            >
+              {!isCopied ? "🔗 Copy link" : "✅ Copied"}
+            </button>
+
+            <article>
+              <h2 className={`${oswald.className} text-2xl capitalize`}>
+                abdelrhman khaled
+              </h2>
+              <p className="pt-3 text-sm text-gray-700">
+                bodi.khaled@gmail.com
+              </p>
+            </article>
+            <hr className="my-5 text-gray-300" />
+            <section className="flex justify-between items-center">
+              <label htmlFor="firstName" className={oswald.className}>
+                Name
+              </label>
+              <div className="flex justify-between gap-6">
+                <input
+                  title="first-name"
+                  type="text"
+                  name="firstName"
+                  id="firstName"
+                  className="border border-gray-300 transition-colors duration-500 w-[150px] rounded-lg p-1"
+                  onChange={handleChange}
+                  required
+                />
+                <input
+                  title="last-name"
+                  type="text"
+                  name="lastName"
+                  className="border border-gray-300 transition-colors duration-500 w-[150px] rounded-lg p-1"
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </section>
+            <hr className="my-5 text-gray-300" />
+            <section className="flex justify-between items-center ">
+              <label htmlFor="Email" className={oswald.className}>
+                Email address
+              </label>
+              <div className="relative ms-auto">
+                <input
+                  type="email"
+                  id="Email"
+                  name="email"
+                  className="w-[324px] pl-10 pr-4 py-1 border rounded-lg border-gray-300 transition-colors duration-500"
+                  onChange={handleChange}
+                  required
+                />
+                <figure className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-xl">
+                  ✉
+                </figure>
+              </div>
+            </section>
+            <hr className="my-5 text-gray-300" />
+            <div className="flex justify-between items-center ">
+              <label htmlFor="Password" className={oswald.className}>
+                Password
+              </label>
+              <section className="relative ms-auto">
+                <input
+                  type="password"
+                  id="Password"
+                  name="password"
+                  className="w-[324px] pl-10 pr-4 py-1 border rounded-lg border-gray-300 transition-colors duration-500"
+                  onChange={handleChange}
+                  required
+                />
+                <figure className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-xl">
+                  🔒
+                </figure>
+                {formData.password ? (
+                  <figure
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-md cursor-pointer"
+                    onClick={() => {
+                      const passValue = document.querySelector(
+                        "#Password"
+                      ) as HTMLInputElement;
+                      passValue.value = "";
+                      setFormData((prev) => ({
+                        ...prev,
+                        password: "",
+                      }));
+                    }}
+                  >
+                    ❌
+                  </figure>
+                ) : (
+                  ""
+                )}
+              </section>
+            </div>
+            <hr className="my-5 text-gray-300" />
+            <section className="flex justify-between items-center ">
+              <label htmlFor="profile-pic" className={oswald.className}>
+                Profile Picture
+              </label>
+              <figure className="flex justify-between items-center gap-5">
+                {profileImage ? (
+                  <Image
+                    src={profileImage}
+                    alt="user picture"
+                    width={50}
+                    height={50}
+                    className="object-cover rounded-full border-4 aspect-square border-white bg-white ms-auto"
+                  ></Image>
+                ) : (
+                  ""
+                )}
+                <input
+                  type="file"
+                  id="profile-pic"
+                  className="hidden"
+                  name="profilePic"
+                  onChange={handleFile}
+                />
+                <label
+                  htmlFor="profile-pic"
+                  className="w-[150px] pr-2 py-2 border text-center rounded-lg border-gray-300 cursor-pointer text-sm"
+                >
+                  {selectFileName.length > 20
+                    ? selectFileName.slice(0, 15) + " ..."
+                    : selectFileName}
+                </label>
+              </figure>
+            </section>
+            <hr className="my-5 text-gray-300" />
+            <section className="flex justify-between items-center ">
+              <p className={oswald.className}>Gender</p>
+              <div className="flex justify-between items-center gap-5">
+                <div className="flex justify-between gap-2">
+                  <label htmlFor="male">Male</label>
+                  <input
+                    name="gender"
+                    type="radio"
+                    id="male"
+                    onChange={handleChange}
+                    className="accent-black"
+                    value={"male"}
+                  />
+                </div>
+                <div className="flex justify-between gap-2">
+                  <label htmlFor="female">Female</label>
+                  <input
+                    name="gender"
+                    type="radio"
+                    id="female"
+                    value={"female"}
+                    onChange={handleChange}
+                    className="accent-black"
+                  />
+                </div>
+              </div>
+            </section>
+            <hr className="my-5 text-gray-300" />
+            {errors ? (
+              <div className="flex justify-center items-center pb-5">
+                <p className="text-sm text-red-500">
+                  {errors.firstName ||
+                    errors.email ||
+                    errors.lastName ||
+                    errors.password ||
+                    errors.image}
+                </p>
+              </div>
+            ) : (
+              ""
+            )}
+            <section className="flex justify-between items-center ">
+              <figure className="flex justify-between items-center gap-2">
+                <a
+                  href="https://github.com/AbdelrhmanKhaled76"
+                  target="_blank"
+                  title="github link"
+                  rel="noopener"
+                >
+                  <FontAwesomeIcon
+                    icon={faGithubAlt}
+                    className="text-2xl p-1 rounded-full cursor-pointer"
+                  />
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/abdelrhmankhaledmohamed76/"
+                  target="_blank"
+                  title="linked_in link"
+                  rel="noopener"
+                >
+                  <FontAwesomeIcon
+                    icon={faLinkedinIn}
+                    className="text-2xl p-1 rounded-full  cursor-pointer"
+                  />
+                </a>
+              </figure>
+              <div className="flex justify-between items-center gap-5">
+                <button
+                  type="reset"
+                  className="border rounded-lg border-gray-300 cursor-pointer py-2 px-4"
+                  onClick={handleReset}
+                >
+                  Reset
+                </button>
+                <button
+                  type="submit"
+                  className="border rounded-lg border-gray-300 text-white bg-black cursor-pointer py-2 px-4"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </section>
+          </div>
+        </form>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+    </>
   );
 }
