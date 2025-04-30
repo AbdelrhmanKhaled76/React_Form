@@ -34,6 +34,7 @@ interface FormData {
 }
 
 export default function Home() {
+  const [loading, setLoading] = useState<boolean>(false);
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const selectedFile = useRef<File>(null);
   const [profileImage, setProfileImage] = useState<string>("");
@@ -125,31 +126,49 @@ export default function Home() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    const form = new FormData();
-    validate();
     e.preventDefault();
+
+    // Validate first before setting loading state
     if (!profileImage) {
       setValidationError("image field is required");
+      validate();
       return;
     }
-    if (validate()) {
+
+    if (!validate()) return; // Don't proceed if validation fails
+
+    setLoading(true); // Now we're sure we'll make the API call
+    const form = new FormData();
+
+    try {
+      // Prepare form data
       for (const [key, val] of Object.entries(formData)) {
         if (val) form.append(key, String(val));
       }
-      if (selectedFile.current) form.append("image", selectedFile.current);
-      let res = await fetch(`/api/register`, {
+
+      if (selectedFile.current) {
+        form.append("image", selectedFile.current);
+      }
+
+      // Make API call
+      const res = await fetch(`/api/register`, {
         method: "POST",
         body: form,
       });
+
       if (!res.ok) {
         const error = await res.json();
-        toast.error(error.message);
-      } else {
-        const response = await res.json();
-        toast.success(response.message);
+        throw new Error(error.message || "Registration failed");
       }
-    } else {
-      return;
+
+      const response = await res.json();
+      toast.success(response.message || "Registration successful!");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "An unknown error occurred"
+      );
+    } finally {
+      setLoading(false); // Always reset loading state
     }
   };
 
@@ -386,10 +405,15 @@ export default function Home() {
                   Reset
                 </button>
                 <button
+                  disabled={loading}
                   type="submit"
-                  className="border rounded-lg border-gray-300 text-white bg-black cursor-pointer py-2 px-4"
+                  className={`border rounded-lg border-gray-300 text-white bg-black ${
+                    loading
+                      ? "cursor-not-allowed opacity-50"
+                      : "cursor-pointer opacity-100"
+                  }  py-2 px-4`}
                 >
-                  Save Changes
+                  {loading ? "Loading ..." : "Save Changes"}
                 </button>
               </div>
             </section>
