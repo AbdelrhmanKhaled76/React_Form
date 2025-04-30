@@ -100,16 +100,21 @@ export default function Home() {
       setProfileImage("");
       setSelectFileName("select a picture");
       setValidationError("no image selected");
+      validate();
       return;
     }
     if (!ALLOWED_TYPES.includes(Image.type)) {
+      setProfileImage("");
       setValidationError("invalid image type");
       setSelectFileName("select a picture");
+      validate();
       return;
     }
     if (Image.size / (1024 * 1024) > ALLOWED_SIZE) {
+      setProfileImage("");
       setValidationError(`Image must be smaller than ${ALLOWED_SIZE}MB`);
       setSelectFileName("select a picture");
+      validate();
       return;
     }
     const image: string = URL.createObjectURL(Image);
@@ -132,18 +137,19 @@ export default function Home() {
         if (val) form.append(key, String(val));
       }
       if (selectedFile.current) form.append("image", selectedFile.current);
-    }
-
-    let res = await fetch(`/api/register`, {
-      method: "POST",
-      body: form,
-    });
-    if (!res.ok) {
-      const error = await res.json();
-      toast.error(error.message);
+      let res = await fetch(`/api/register`, {
+        method: "POST",
+        body: form,
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        toast.error(error.message);
+      } else {
+        const response = await res.json();
+        toast.success(response.message);
+      }
     } else {
-      const response = await res.json();
-      toast.success(response.message);
+      return;
     }
   };
 
